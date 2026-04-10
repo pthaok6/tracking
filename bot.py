@@ -20,8 +20,8 @@ if not TOKEN:
     raise Exception("Missing BOT TOKEN")
 
 
-DATA_FILE = "data/orders.json"
-USERS_FILE = "data/users.json"
+DATA_FILE = "/data/orders.json"
+USERS_FILE = "/data/users.json"
 
 
 # ======================
@@ -131,11 +131,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     elif text == "🌐 Mở web":
-       WEB_URL = (
-          os.getenv("RAILWAY_PUBLIC_DOMAIN")
-          or os.getenv("RAILWAY_STATIC_URL")
-          or "http://localhost:5000"
-)
+       WEB_URL = "https://web-production-b5fc6.up.railway.app/"
 
        if not WEB_URL.startswith("http"):
         WEB_URL = "https://" + WEB_URL        
