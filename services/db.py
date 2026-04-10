@@ -3,6 +3,8 @@ import sqlite3
 DB = "instance/data.db"
 
 def init_db():
+    os.makedirs("instance", exist_ok=True)  # 🔥 QUAN TRỌNG
+
     conn = sqlite3.connect(DB)
     c = conn.cursor()
 
