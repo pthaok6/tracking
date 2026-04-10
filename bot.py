@@ -172,3 +172,4 @@ def start_bot():
 
     print("BOT STARTED")
     app.run_polling()
+start_bot()
