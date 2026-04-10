@@ -1,65 +1,73 @@
 import sqlite3
 import os
 
-DB = "instance/data.db"
+DB_PATH = "data/app.db"
+
+def get_conn():
+    os.makedirs("data", exist_ok=True)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
+
 
 def init_db():
-    os.makedirs("instance", exist_ok=True)  # 🔥 QUAN TRỌNG
+    conn = get_conn()
+    cur = conn.cursor()
 
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
-
-    c.execute("""
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        code TEXT,
-        note TEXT,
-        last_time INTEGER,
-        seen_time INTEGER
+        code TEXT NOT NULL,
+        note TEXT NOT NULL
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER UNIQUE
     )
     """)
 
     conn.commit()
     conn.close()
 
-def get_orders():
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
-    c.execute("SELECT * FROM orders")
-    rows = c.fetchall()
-    conn.close()
 
-    return [
-        {
-            "id": r[0],
-            "code": r[1],
-            "note": r[2],
-            "last_time": r[3],
-            "seen_time": r[4]
-        } for r in rows
-    ]
-
+# ======================
+# ORDERS
+# ======================
 def add_order(code, note):
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
-    c.execute("INSERT INTO orders (code, note) VALUES (?, ?)", (code, note))
+    conn = get_conn()
+    conn.execute(
+        "INSERT INTO orders (code, note) VALUES (?, ?)",
+        (code, note)
+    )
     conn.commit()
     conn.close()
 
-def delete_order(id):
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
-    c.execute("DELETE FROM orders WHERE id=?", (id,))
+
+def get_orders():
+    conn = get_conn()
+    rows = conn.execute("SELECT * FROM orders").fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def delete_order(order_id):
+    conn = get_conn()
+    conn.execute("DELETE FROM orders WHERE id=?", (order_id,))
     conn.commit()
     conn.close()
 
-def update_time(id, last_time, seen_time):
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
-    c.execute("""
-        UPDATE orders
-        SET last_time=?, seen_time=?
-        WHERE id=?
-    """, (last_time, seen_time, id))
+
+# ======================
+# USERS
+# ======================
+def add_user(user_id):
+    conn = get_conn()
+    conn.execute(
+        "INSERT OR IGNORE INTO users (user_id) VALUES (?)",
+        (user_id,)
+    )
     conn.commit()
     conn.close()
