@@ -59,9 +59,6 @@ def track():
 
     data = get_tracking(code)
 
-    # ======================
-    # SAFE CHECK (QUAN TRỌNG)
-    # ======================
     try:
         records = data["data"]["sls_tracking_info"]["records"]
     except Exception:
