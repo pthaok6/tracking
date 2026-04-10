@@ -2,9 +2,14 @@ from flask import Flask, request, jsonify, render_template
 from services.db import *
 from services.spx_api import get_tracking
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", template_folder="templates")
 
 init_db()
+
+def run_bot():
+    start_bot()
+
+threading.Thread(target=run_bot, daemon=True).start()
 
 @app.route("/")
 def index():
@@ -35,4 +40,4 @@ def track():
     return jsonify(records)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    app.run(host="0.0.0.0", port=10001)
