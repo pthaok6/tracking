@@ -4,7 +4,6 @@ from flask import Flask, request, jsonify, render_template
 
 from services.db import *
 from services.spx_api import get_tracking
-from bot import start_bot
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
