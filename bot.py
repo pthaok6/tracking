@@ -15,7 +15,7 @@ from telegram.ext import (
 
 from services.spx_api import get_tracking
 
-TOKEN = "6324314072:AAEvtX9ROY4SA8DUKMkhLpm2_77IJbEsT6M"#os.getenv("TOKEN")  # 🔥 dùng env (Railway)
+TOKEN = os.getenv("TOKEN")  # 🔥 dùng env (Railway)
 
 DATA_FILE = "data/orders.json"
 USERS_FILE = "data/users.json"
