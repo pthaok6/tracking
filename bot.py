@@ -12,6 +12,7 @@ from telegram.ext import (
 
 from services.spx_api import get_tracking
 
+
 # ======================
 # ENV SAFE
 # ======================
@@ -20,6 +21,12 @@ if not TOKEN:
     raise Exception("Missing BOT TOKEN")
 
 
+WEB_URL = os.getenv("WEB_URL", "https://web-production-b5fc6.up.railway.app/")
+
+
+# ======================
+# DATA FILE (RAILWAY SAFE)
+# ======================
 DATA_FILE = "/data/orders.json"
 USERS_FILE = "/data/users.json"
 
@@ -35,6 +42,197 @@ def load_json(path):
         return []
 
 
+def save_json(path, data):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2)
+
+
+def load_orders():
+    return load_json(DATA_FILE)
+
+
+def save_orders(data):
+    save_json(DATA_FILE, data)
+
+
+def load_users():
+    return load_json(USERS_FILE)
+
+
+def save_users(data):
+    save_json(USERS_FILE, data)
+
+
+# ======================
+# UTIL
+# ======================
+def format_time(epoch):
+    return datetime.fromtimestamp(epoch).strftime("%H:%M %d/%m")
+
+
+def build_timeline(records):
+    msg = "📍 Hành trình:\n\n"
+    for r in list(reversed(records[:5])):
+        msg += f"{format_time(r['actual_time'])} - {r['buyer_description']}\n\n"
+    return msg
+
+
+# ======================
+# UI
+# ======================
+def main_menu():
+    return ReplyKeyboardMarkup(
+        [["➕ Thêm đơn"], ["📦 Xem đơn"], ["🌐 Mở web"]],
+        resize_keyboard=True
+    )
+
+
+# ======================
+# START
+# ======================
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    users = load_users()
+    uid = update.effective_chat.id
+
+    if uid not in users:
+        users.append(uid)
+        save_users(users)
+
+    context.user_data["adding"] = False
+
+    await update.message.reply_text(
+        "📦 Tracking Bot",
+        reply_markup=main_menu()
+    )
+
+
+# ======================
+# HANDLE TEXT
+# ======================
+async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text.strip()
+
+    # ======================
+    # ADD ORDER MODE
+    # ======================
+    if context.user_data.get("adding"):
+        parts = text.split(" ", 1)
+
+        if len(parts) != 2:
+            await update.message.reply_text("❌ Sai format: CODE NOTE")
+            return
+
+        code, note = parts
+
+        if len(code) < 3:
+            await update.message.reply_text("❌ CODE quá ngắn")
+            return
+
+        orders = load_orders()
+        orders.append({"code": code.strip(), "note": note.strip()})
+        save_orders(orders)
+
+        context.user_data["adding"] = False
+
+        await update.message.reply_text(
+            "✅ Đã thêm đơn",
+            reply_markup=main_menu()
+        )
+        return
+
+    # ======================
+    # MENU
+    # ======================
+    if text == "➕ Thêm đơn":
+        context.user_data["adding"] = True
+        await update.message.reply_text("Nhập: CODE NOTE")
+
+    elif text == "📦 Xem đơn":
+        orders = load_orders()
+
+        if not orders:
+            await update.message.reply_text("📭 Chưa có đơn nào")
+            return
+
+        keyboard = [
+            [
+                InlineKeyboardButton(f"{o['note']}", callback_data=f"view_{i}"),
+                InlineKeyboardButton("❌", callback_data=f"delete_{i}")
+            ]
+            for i, o in enumerate(orders)
+        ]
+
+        await update.message.reply_text(
+            "📦 Danh sách đơn:",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+    elif text == "🌐 Mở web":
+        keyboard = [
+            [InlineKeyboardButton("🚀 Open Web App", url=WEB_URL)]
+        ]
+
+        await update.message.reply_text(
+            "👉 Click để mở web:",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+
+# ======================
+# HANDLE BUTTON
+# ======================
+async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    q = update.callback_query
+    await q.answer()
+
+    orders = load_orders()
+    data = q.data
+
+    # ======================
+    # VIEW TRACKING
+    # ======================
+    if data.startswith("view_"):
+        i = int(data.split("_")[1])
+
+        try:
+            api = get_tracking(orders[i]["code"])
+            records = api["data"]["sls_tracking_info"]["records"]
+
+            msg = build_timeline(records)
+            await q.edit_message_text(msg)
+
+        except Exception as e:
+            await q.edit_message_text("❌ Lỗi tracking")
+
+    # ======================
+    # DELETE
+    # ======================
+    elif data.startswith("delete_"):
+        i = int(data.split("_")[1])
+
+        removed = orders.pop(i)
+        save_orders(orders)
+
+        await q.edit_message_text(f"🗑 Deleted: {removed['note']}")
+
+
+# ======================
+# RUN BOT
+# ======================
+def start_bot():
+    app = ApplicationBuilder().token(TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+    app.add_handler(CallbackQueryHandler(handle_button))
+
+    print("BOT STARTED")
+    app.run_polling()
+
+
+if __name__ == "__main__":
+    start_bot()
 def save_json(path, data):
     os.makedirs("data", exist_ok=True)
     with open(path, "w") as f:
