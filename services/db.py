@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-DB_PATH = "data/app.db"
+DB_PATH = "/data/app.db"
 
 def get_conn():
     os.makedirs("data", exist_ok=True)
