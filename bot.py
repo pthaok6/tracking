@@ -137,12 +137,12 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
           or "http://localhost:5000"
 )
 
-      if not WEB_URL.startswith("http"):
+       if not WEB_URL.startswith("http"):
         WEB_URL = "https://" + WEB_URL        
-      keyboard = [
+       keyboard = [
            [InlineKeyboardButton("🚀 Open Web App", url=WEB_URL)]
         ]
-      await update.message.reply_text(
+       await update.message.reply_text(
         "👉 Click để mở web:",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
