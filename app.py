@@ -14,14 +14,6 @@ init_db()
 
 
 # ======================
-# BOT THREAD
-# ======================
-
-
-threading.Thread(target=run_bot, daemon=True).start()
-
-
-# ======================
 # ROUTES
 # ======================
 @app.route("/")
