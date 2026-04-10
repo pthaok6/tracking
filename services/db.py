@@ -70,7 +70,8 @@ def add_user(user_id):
         (user_id,)
     )
     conn.commit()
-    conn.close()def add_order(code, note):
+    conn.close()
+def add_order(code, note):
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
