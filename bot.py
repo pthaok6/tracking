@@ -131,8 +131,13 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     elif text == "🌐 Mở web":
-        await update.message.reply_text("https://your-app.up.railway.app")
-
+        WEB_URL = os.getenv("WEB_URL", "https://your-app.up.railway.app")
+        keyboard = [
+           [InlineKeyboardButton("🚀 Open Web App", url=WEB_URL)]
+        await update.message.reply_text(
+        "👉 Click để mở web:",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
 
 async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     q = update.callback_query
