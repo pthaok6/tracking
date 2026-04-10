@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify, render_template
 
 from services.db import *
 from services.spx_api import get_tracking
-from bot import start_bot  # ✅ FIX 1
+from bot import start_bot
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
@@ -68,15 +68,16 @@ def track():
 
 
 # ======================
-# RAILWAY ENTRY
+# HEALTH CHECK
+# ======================
+@app.route("/health")
+def health():
+    return "OK"
+
+
+# ======================
+# START SERVER
 # ======================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-    records = data["data"]["sls_tracking_info"]["records"]
-
-    return jsonify(records)
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10002))
+    port = int(os.environ.get("PORT", 10003))
     app.run(host="0.0.0.0", port=port)
