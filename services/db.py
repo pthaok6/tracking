@@ -1,13 +1,11 @@
-import sqlite3
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
-DB_PATH = "/data/app.db"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 def get_conn():
-    os.makedirs("/data", exist_ok=True)
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    return conn
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 
 def init_db():
@@ -16,7 +14,7 @@ def init_db():
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS orders (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         code TEXT NOT NULL,
         note TEXT NOT NULL
     )
@@ -24,8 +22,8 @@ def init_db():
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER UNIQUE
+        id SERIAL PRIMARY KEY,
+        user_id BIGINT UNIQUE
     )
     """)
 
@@ -35,6 +33,33 @@ def init_db():
 
 # ======================
 # ORDERS
+# ======================
+def add_order(code, note):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO orders (code, note) VALUES (%s, %s)",
+        (code, note)
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_orders():
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM orders ORDER BY id DESC")
+    rows = cur.fetchall()
+    conn.close()
+    return rows
+
+
+def delete_order(order_id):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM orders WHERE id=%s", (order_id,))
+    conn.commit()
+    conn.close()# ORDERS
 # ======================
 def add_order(code, note):
     conn = get_conn()
