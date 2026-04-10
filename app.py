@@ -1,23 +1,44 @@
+import os
+import threading
 from flask import Flask, request, jsonify, render_template
+
 from services.db import *
 from services.spx_api import get_tracking
+from bot import start_bot  # ✅ FIX 1
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
+# ======================
+# INIT DB
+# ======================
 init_db()
 
+
+# ======================
+# BOT THREAD
+# ======================
 def run_bot():
-    start_bot()
+    try:
+        start_bot()
+    except Exception as e:
+        print("BOT ERROR:", e)
+
 
 threading.Thread(target=run_bot, daemon=True).start()
 
+
+# ======================
+# ROUTES
+# ======================
 @app.route("/")
 def index():
     return render_template("index.html")
 
+
 @app.route("/orders")
 def orders():
     return jsonify(get_orders())
+
 
 @app.route("/orders/add", methods=["POST"])
 def add():
@@ -25,16 +46,36 @@ def add():
     add_order(data["code"], data["note"])
     return {"ok": True}
 
+
 @app.route("/orders/delete", methods=["POST"])
 def delete():
     delete_order(request.json["id"])
     return {"ok": True}
 
+
 @app.route("/track_one", methods=["POST"])
 def track():
-    code = request.json["tracking_number"]
+    code = request.json.get("tracking_number")
+
     data = get_tracking(code)
 
+    # ======================
+    # SAFE CHECK (QUAN TRỌNG)
+    # ======================
+    try:
+        records = data["data"]["sls_tracking_info"]["records"]
+    except Exception:
+        return jsonify([])
+
+    return jsonify(records)
+
+
+# ======================
+# RAILWAY ENTRY
+# ======================
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
     records = data["data"]["sls_tracking_info"]["records"]
 
     return jsonify(records)
