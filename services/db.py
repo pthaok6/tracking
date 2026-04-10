@@ -4,7 +4,7 @@ import os
 DB_PATH = "/data/app.db"
 
 def get_conn():
-    os.makedirs("data", exist_ok=True)
+    os.makedirs("/data", exist_ok=True)
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
