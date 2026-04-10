@@ -131,10 +131,18 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     elif text == "🌐 Mở web":
-        WEB_URL = os.getenv("WEB_URL", "https://your-app.up.railway.app")
-        keyboard = [
+       WEB_URL = (
+          os.getenv("RAILWAY_PUBLIC_DOMAIN")
+          or os.getenv("RAILWAY_STATIC_URL")
+          or "http://localhost:5000"
+)
+
+      if not WEB_URL.startswith("http"):
+        WEB_URL = "https://" + WEB_URL        
+      keyboard = [
            [InlineKeyboardButton("🚀 Open Web App", url=WEB_URL)]
-        await update.message.reply_text(
+        ]
+      await update.message.reply_text(
         "👉 Click để mở web:",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
