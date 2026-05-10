@@ -1,4 +1,5 @@
 import json
+import os
 import asyncio
 from datetime import datetime
 from telegram import (
@@ -12,7 +13,7 @@ from telegram.ext import (
 )
 from services.spx_api import get_tracking
 
-TOKEN = "8750661052:AAHYfxuF8Rc_EywXBBpsT4IVUhoF4Ds2agg"
+TOKEN = os.getenv("TOKEN") #"8750661052:AAHYfxuF8Rc_EywXBBpsT4IVUhoF4Ds2agg"
 DATA_FILE = "data/orders.json"
 
 # ===== STORAGE =====
