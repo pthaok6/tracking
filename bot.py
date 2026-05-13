@@ -247,44 +247,114 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         
         #==== CHECK UPDATE ====
+
 async def check_updates(app):
     while True:
-        orders = load_orders()
-        changed = False
+        try:
+            orders = load_orders()
+            changed = False
 
-        for o in orders:
-            try:
-                data = get_tracking(o["code"])
-                records = data["data"]["sls_tracking_info"]["records"]
+            for o in orders:
+                try:
+                    data = get_tracking(o["code"])
 
-                latest = records[0]  # record mới nhất
-                latest_time = latest["actual_time"]
+                    records = data["data"]["sls_tracking_info"]["records"]
 
-                # nếu chưa có last_time → set luôn
-                if "last_time" not in o:
-                    o["last_time"] = latest_time
-                    changed = True
-                    continue
+                    records = sorted(
+                        records,
+                        key=lambda x: x["actual_time"],
+                        reverse=True
+                    )
 
-                # nếu có update
-                if latest_time > o["last_time"]:
-                    o["last_time"] = latest_time
-                    changed = True
+                    latest = records[0]
 
-                    msg = f"📦 {o['note']}\n{o['code']}\n\n"
-                    msg += f"🔔 Cập nhật mới:\n{latest['buyer_description']}"
+                    latest_time = latest["actual_time"]
+                    latest_desc = latest["buyer_description"]
 
-                    # 🔥 gửi cho tất cả user đã chat bot
-                    for user_id in app.bot_data.get("users", []):
-                        await app.bot.send_message(user_id, msg)
+                    # init lần đầu
+                    if "last_time" not in o:
+                        o["last_time"] = latest_time
+                        o["last_desc"] = latest_desc
+                        changed = True
+                        continue
 
-            except Exception as e:
-                print("ERROR:", e)
+                    # có update mới
+                    if (
+                        latest_time != o.get("last_time")
+                        or latest_desc != o.get("last_desc")
+                    ):
 
-        if changed:
-            save_orders(orders)
+                        o["last_time"] = latest_time
+                        o["last_desc"] = latest_desc
 
-        await asyncio.sleep(60)  # check mỗi 30s
+                        changed = True
+
+                        msg = (
+                            f"📦 {o['note']}\n"
+                            f"{o['code']}\n\n"
+                            f"🔔 {latest_desc}"
+                        )
+
+                        for user_id in load_users():
+                            try:
+                                await app.bot.send_message(user_id, msg)
+                            except Exception as e:
+                                print("SEND ERROR:", e)
+
+                    await asyncio.sleep(2)
+
+                except Exception as e:
+                    print("TRACK ERROR:", e)
+
+            if changed:
+                save_orders(orders)
+
+        except Exception as e:
+            print("LOOP ERROR:", e)
+
+        await asyncio.sleep(60)
+
+
+
+# async def check_updates(app):
+#     while True:
+#         orders = load_orders()
+#         changed = False
+
+#         for o in orders:
+#             try:
+#                 data = get_tracking(o["code"])
+#                 records = data["data"]["sls_tracking_info"]["records"]
+
+#                 latest = records[0]  # record mới nhất
+#                 latest_time = latest["actual_time"]
+
+#                 # nếu chưa có last_time → set luôn
+#                 if "last_time" not in o:
+#                     o["last_time"] = latest_time
+#                     changed = True
+#                     continue
+
+#                 # nếu có update
+#                 if latest_time > o["last_time"]:
+#                     o["last_time"] = latest_time
+#                     changed = True
+
+#                     msg = f"📦 {o['note']}\n{o['code']}\n\n"
+#                     msg += f"🔔 Cập nhật mới:\n{latest['buyer_description']}"
+
+#                     # 🔥 gửi cho tất cả user đã chat bot
+#                     for user_id in app.bot_data.get("users", []):
+#                         await app.bot.send_message(user_id, msg)
+
+#             except Exception as e:
+#                 print("ERROR:", e)
+
+#         if changed:
+#             save_orders(orders)
+
+#         await asyncio.sleep(60)   
+  # check mỗi 30s
         
 async def post_init(app):
     print("Bot started + background task running...")
