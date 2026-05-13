@@ -291,7 +291,7 @@ async def post_init(app):
     app.create_task(check_updates(app))
 
 # ===== RUN =====
-app = ApplicationBuilder().token(TOKEN).build()
+app = ApplicationBuilder().token(TOKEN).post_init(post_init).build()
 
 app.add_handler(CommandHandler("start", start))
 #ADD
