@@ -295,7 +295,7 @@ async def check_updates(app):
                             f"🔔 {latest_desc}"
                         )
 
-                        for user_id in load_users():
+                        for user_id in app.bot_data.get("users", []):
                             try:
                                 await app.bot.send_message(user_id, msg)
                             except Exception as e:
