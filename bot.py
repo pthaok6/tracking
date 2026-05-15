@@ -105,7 +105,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await list_orders(update, context)
 
     elif text == "🌐 Xem trên web":
-       WEB_URL = "http://localhost:5001"
+       WEB_URL = "https://unbarking-marjory-exemplificative.ngrok-free.dev"
     
        keyboard = [
            [InlineKeyboardButton("🚀 Open Web App", url=WEB_URL)]
